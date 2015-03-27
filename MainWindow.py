@@ -157,13 +157,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def item_double_clicked(self, item):
         webbrowser.open(item.ticket_url)
 
-    def split_datetime(self, date_time):
-        date, time = date_time.split("T")
-        time = time[:-3]
-        date = QDate.fromString(date, Qt.ISODate)
-        good_date = date.toString(QLocale().dateFormat())
-        return good_date, time
-
     def show_events(self, events):
         for event in events:
             item = self.item_for_event(event)
