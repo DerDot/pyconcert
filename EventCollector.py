@@ -21,7 +21,7 @@ class EventCollector(QThread):
     new_artists = pyqtSignal(str)
     getting_events = pyqtSignal()
 
-    def __init__(self, musicdirs, location):
+    def __init__(self, musicdirs, location, api="bandsintown"):
         '''
         Constructor
         '''
@@ -31,12 +31,17 @@ class EventCollector(QThread):
         self.events = None
         self.artists = None
         self.mode = "Library"
+        self.api = api
 
     def run(self):
         self.artists = self.collect_artists()
         self.getting_events.emit()
-        self.events = events_for_artists_songkick(self.artists,
-                                                  self.location)
+        if self.api == "songkick":
+            self.events = events_for_artists_songkick(self.artists,
+                                                      self.location)
+        else:
+            self.events = events_for_artists_bandsintown(self.artists,
+                                                         self.location)
 
     def get_artists(self, audiopath):
         try:
