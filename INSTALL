@@ -1,6 +1,9 @@
 This program requires pyqt4 (but should also work with pyqt5), mutagen and python-pylast.
-
 Example for apt-get:
 sudo apt-get install python-pyqt4 python-mutagen python-pylast
+
+Additionally, for Spotify support, pyspotify is needed.
+See their site for further information:
+https://pyspotify.mopidy.com/en/latest/installation/
 
 After this, fill out the needed information in the example_config.json and rename it to config.json.
