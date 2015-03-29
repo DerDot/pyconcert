@@ -2,8 +2,6 @@ import urllib
 from utils import config, parse_json
 from PyQt4.QtCore import QDate, Qt, QLocale
 
-import spotify
-
 SK_API_KEY = config["SK_API_KEY"]
 
 class Event(object):
@@ -117,20 +115,3 @@ def events_for_artists_songkick(artists, location):
         events = _get_songkick_events(artist, sk_loc)
         all_events.extend(events)
     return all_events
-
-def get_spotify_session():
-    session = spotify.Session()
-    print "State", session.connection.state
-    session.login(config["SPOTIFY_USER"],
-                  config["SPOTIFY_PASSWORD"])
-    print "State", session.connection.state
-    session.process_events()
-    print "State", session.connection.state
-    return session
-
-if __name__ == "__main__":
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    print "ab"
-    session = get_spotify_session()
-    print "State", session.connection.state
