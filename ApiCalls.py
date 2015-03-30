@@ -1,21 +1,7 @@
-try:
-    import cjson
-    parse_json = cjson.decode
-except ImportError:
-    import json
-    parse_json = json.loads
-
-from bandsintown import RequestException
-try:
-    import bandsintown
-    bandsintown.app_id = "pyconcert"
-except ImportError:
-    pass
-
 import urllib
+from utils import config, parse_json
+from PyQt4.QtCore import QDate, Qt, QLocale
 
-with open("config.json") as config_file:
-    config = parse_json(config_file.read())
 SK_API_KEY = config["SK_API_KEY"]
 
 class Event(object):
@@ -69,33 +55,63 @@ def _get_songkick_events(artist, location):
         country = event['venue']['metroArea']['country']['displayName']
         date = event['start']['date']
         time = event['start']['time']
+        url = event['uri']
         result_event = Event(artists,
                              venue,
                              city,
                              country,
                              date,
                              time,
-                             event['uri'])
+                             url)
         ret.append(result_event)
     return ret
 
+def _split_datetime(date_time):
+    date, time = date_time.split("T")
+    time = time[:-3]
+    date = QDate.fromString(date, Qt.ISODate)
+    good_date = date.toString(QLocale().dateFormat())
+    return good_date, time
+
+def _get_bandsintown_events(artists, location):
+    api_call = "http://api.bandsintown.com/events/search"
+    args = [("location", location),
+            ("format", "json"),
+            ("app_id", "pyconcert")]
+    for artist in artists:
+        args.append(("artists[]", artist))
+    api_call = "%s?%s" % (api_call, urllib.urlencode(args))
+    resp = parse_json(urllib.urlopen(api_call).read())
+    ret = []
+    for event in resp:
+        artists = [artist["name"] for artist in event["artists"]]
+        venue = event["venue"]["name"]
+        city = event["venue"]["city"]
+        country = event["venue"]["country"]
+        date, time = _split_datetime(event["datetime"])
+        url = event["url"]
+        result_event = Event(artists,
+                             venue,
+                             city,
+                             country,
+                             date,
+                             time,
+                             url)
+        ret.append(result_event)
+    return ret
+    
 def events_for_artists_bandsintown(artists, location):
     all_events = []
     for artists_chunk in _chunks(list(artists), 50):
-        try:
-            events = bandsintown.Event.search(location=location, artists=artists_chunk)
-            all_events.extend(events)
-        except RequestException as e:
-            print "Request failed: ", e
+        events = _get_bandsintown_events(artists_chunk, location)
+        for event in events:
+            all_events.append(event)
     return all_events
 
 def events_for_artists_songkick(artists, location):
     all_events = []
     sk_loc = _get_songkick_location(location)
     for artist in artists:
-        try:
-            events = _get_songkick_events(artist, sk_loc)
-            all_events.extend(events)
-        except RequestException as e:
-            print "Request failed: ", e
+        events = _get_songkick_events(artist, sk_loc)
+        all_events.extend(events)
     return all_events
